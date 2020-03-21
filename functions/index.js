@@ -27,28 +27,30 @@ app.get('/hello/:name', (req, res) => {
   return res.status(200).json(response);
 });
 
-// Database に加える（Webブラウザでのテスト用）
-// https://us-central1-api-test-ce66e.cloudfunctions.net/message?text=こんにちは！！！
-app.get('/message', async (req, res) => {
-  // Grab the text parameter.
-  const text = req.query.text;
-  // Push the new message into the Realtime Database using the Firebase Admin SDK.
-  const snapshot = await admin.database().ref('/messages').push({
-    text: text,
+/* GitHub 公開にあたり DB 書き込みは塞ぐ
+  // Database に加える（Webブラウザでのテスト用）
+  // https://us-central1-api-test-ce66e.cloudfunctions.net/message?text=こんにちは！！！
+  app.get('/message', async (req, res) => {
+    // Grab the text parameter.
+    const text = req.query.text;
+    // Push the new message into the Realtime Database using the Firebase Admin SDK.
+    const snapshot = await admin.database().ref('/messages').push({
+      text: text,
+    });
+    // Redirect with 303 SEE OTHER to the URL of the pushed object in the Firebase console.
+    res.redirect(303, snapshot.ref.toString());
   });
-  // Redirect with 303 SEE OTHER to the URL of the pushed object in the Firebase console.
-  res.redirect(303, snapshot.ref.toString());
-});
 
-// Database に加える
-// curl -X POST -H 'Content-Type: application/json' -d '{"text": "おはよう"}' "https://us-central1-api-test-ce66e.cloudfunctions.net/api/message"
-app.post('/message', async (req, res) => {
-  const text = req.body.text;
-  await admin.database().ref('/messages').push({
-    text: text,
+  // Database に加える
+  // curl -X POST -H 'Content-Type: application/json' -d '{"text": "おはよう"}' "https://us-central1-api-test-ce66e.cloudfunctions.net/api/message"
+  app.post('/message', async (req, res) => {
+    const text = req.body.text;
+    await admin.database().ref('/messages').push({
+      text: text,
+    });
+    res.status(200).json({ status: 'OK', result: `Added ${text}` });
   });
-  res.status(200).json({ status: 'OK', result: `Added ${text}` });
-});
+*/
 
 // さしすせそリストを返す
 // curl https://us-central1-api-test-ce66e.cloudfunctions.net/api/items
@@ -97,9 +99,12 @@ app.post('/third-power', (req, res) => {
   return res.status(200).json(response);
 });
 
-// Expose Express API as a single Cloud Function:
+// /api 下に上記ルーティングで公開
 exports.api = functions.https.onRequest(app);
 
+function isNullOrUndefined(val) {
+  return (val === null) || (val === undefined);
+}
 
 ////////////////////////   使ってないやつ（参考に残しておく）  ////////////////////////////////
 // 3乗する
@@ -120,7 +125,3 @@ exports.thirdPower = functions.https.onRequest((req, res) => {
   }
   return res.status(200).send(JSON.stringify(response));
 });
-
-function isNullOrUndefined(val) {
-  return (val === null) || (val === undefined);
-}
